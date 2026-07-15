@@ -1,110 +1,124 @@
 # AI Resume Screening System
 
-An AI agent that reads a job description and a batch of resumes, retrieves
-the best-matching resumes using vector search, and asks an LLM to explain
-*why* each one matches — grounded strictly in what's actually in the resume.
+An AI agent that screens resumes against a job description, using retrieval-augmented generation (RAG) built on real embeddings and a vector database — grounded, ranked, and explained in plain language.
 
-Built to fill the one real gap in my other project (the Research & Report
-Agent): hands-on experience with embeddings and a vector database, since
-that project used live web search (Tavily) instead.
+Given a batch of resumes and a job description, the system retrieves the most semantically relevant resumes via vector search, then uses an LLM to generate a grounded verdict for each candidate: a match rating, a plain-language explanation, and a list of gaps — all strictly based on what's actually written in the resume, not inferred or invented.
 
-## Architecture
+**Live demo:** _add your deployed URL here_
+**Backend repo / this repo:** _add your GitHub URL here_
+
+---
+
+## Why this project
+
+This was built to close a specific gap: a companion project of mine, a [Research & Report Agent](#), uses live web search (Tavily) for retrieval rather than embeddings or a vector database. This project fills that gap with a genuinely useful, real-world use case — resume screening — while reusing the same agentic, multi-step architecture (retrieve → reason → generate) as the original.
+
+Together, the two projects cover both major flavours of RAG:
+- **Search-based RAG** (Research & Report Agent) — retrieves live web content
+- **Embedding-based RAG** (this project) — retrieves from a stored, embedded knowledge base
+
+## How it works
 
 ```
-Resumes (PDF/DOCX/TXT)
-    |
-    v
-Parse -> extract plain text        (app/parser.py)
-    |
-    v
-Embed -> sentence-transformers      (app/embeddings.py)
-    |
-    v
-Store -> ChromaDB (vector database) (app/vector_store.py)
+Resumes (PDF / DOCX / TXT)
+        │
+        ▼
+   Parse to text            (pypdf, python-docx)
+        │
+        ▼
+   Embed                    (sentence-transformers, local, free)
+        │
+        ▼
+   Store in vector DB       (ChromaDB, cosine similarity)
 
-Job Description
-    |
-    v
-LangGraph agent (app/agent_graph.py):
-    retrieve  -> vector search for closest resumes
-    explain   -> LLM (Llama 3.3 70B / Groq) grounds a verdict per resume,
-                 using ONLY the resume text as evidence
-    rank      -> order by verdict, then similarity score
-    |
-    v
-FastAPI backend (app/main.py) -> JSON response
-    |
-    v
-Frontend (frontend/index.html) -> displays ranked, explained results
+
+Job description
+        │
+        ▼
+   Embed (same model)
+        │
+        ▼
+   Vector search ───────────► top-k most similar resumes
+        │
+        ▼
+   LLM grounds a verdict per resume   (Llama 3.3 70B via Groq)
+        │
+        ▼
+   Rank results (Strong → Good → Weak → Not a Match)
+        │
+        ▼
+   Ranked, explained results returned to the frontend
 ```
 
-This mirrors the same agentic, multi-step structure as my other project
-(search -> analyze -> write), just applied to resume screening
-(retrieve -> explain -> rank).
+The retrieval → reasoning pipeline is orchestrated as a **LangGraph** state machine with three nodes — `retrieve`, `explain`, `rank` — mirroring the same agentic structure used in my other project.
 
-## Why these choices
+## Tech stack
 
-- **sentence-transformers (local, free)** for embeddings — no API key or
-  cost needed to get real embeddings/vector-search experience.
-- **ChromaDB** — lightweight, runs locally, zero setup, perfect for a
-  portfolio project (swap for Pinecone/pgvector later if needed).
-- **Groq + Llama 3.3 70B** for the LLM step — same choice as my other
-  project, fast and free.
-- **Low temperature (0.2)** on the LLM call — for consistent, factual
-  judging rather than creative variation.
-- **Grounding by design** — the system prompt explicitly tells the model
-  to only use facts present in the resume text, and to say when
-  information is missing rather than guess. Same lesson from the
-  hallucination problem in my other project, applied here from day one.
+| Layer | Choice | Why |
+|---|---|---|
+| Parsing | pypdf, python-docx | Extract plain text from uploaded resumes |
+| Embeddings | sentence-transformers (`all-MiniLM-L6-v2`) | Free, local, no API key required |
+| Vector database | ChromaDB (cosine similarity) | Zero-setup, file-based, ideal for a focused project |
+| Orchestration | LangGraph | Stateful, multi-step agent workflow |
+| LLM | Llama 3.3 70B via Groq | Fast, free inference; low temperature for consistent judging |
+| Backend | FastAPI | Async REST API |
+| Frontend | HTML / CSS / vanilla JS | Lightweight, no build step, deploys anywhere |
 
-## Setup
+## Getting started
 
-1. Install dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
+### 1. Clone and install
 
-2. Get a free Groq API key at https://console.groq.com and set it:
-   ```
-   export GROQ_API_KEY="your-key-here"
-   ```
+```bash
+git clone https://github.com/yourusername/resume-screener.git
+cd resume-screener
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-3. Run the backend:
-   ```
-   uvicorn app.main:app --reload --port 8000
-   ```
+### 2. Configure your API key
 
-4. Open `frontend/index.html` directly in your browser (no build step
-   needed — it's plain HTML/JS that calls the backend on localhost:8000).
+Create a `.env` file in the project root:
 
-5. Upload a few resumes, paste a job description, and click "Screen
-   Candidates."
+```
+GROQ_API_KEY=your-groq-api-key
+```
 
-## What I'd add next (for the interview "what would you improve" question)
+Get a free key at [console.groq.com](https://console.groq.com).
 
-- An evaluation harness: a small set of resumes with known correct
-  verdicts, checked automatically to catch regressions.
-- Batch scaling: currently each resume gets its own LLM call for the
-  explanation step — for large batches, I'd only send the LLM call for
-  the top-N retrieved by vector search (which is already how it works),
-  and add caching for repeated job descriptions.
-- Swap ChromaDB for a hosted vector database (Pinecone) or pgvector if
-  this needed to run across multiple servers rather than a single
-  local instance.
-- A proper React frontend (currently a lightweight static HTML page to
-  keep the project simple and fast to build).
+### 3. Run the backend
 
-## Interview talking points
+```bash
+uvicorn app.main:app --reload --port 8000
+```
 
-- **"Why did you build this?"** — To get real, hands-on experience with
-  embeddings and vector databases, which my other project didn't need
-  since it used live web search instead.
-- **"How is this a RAG system?"** — Retrieval: vector search finds the
-  most relevant resumes for a job description. Generation: the LLM
-  explains the match, grounded only in the retrieved resume's actual
-  text.
-- **"How do you prevent hallucination here?"** — The system prompt
-  explicitly restricts the LLM to facts in the resume text, and asks it
-  to flag missing information rather than assume it. Same principle as
-  my other project, applied from the start this time instead of added
-  after the fact.
+### 4. Open the frontend
+
+Open `frontend/index.html` directly in your browser. Update the `API_BASE` constant near the top of its `<script>` tag if your backend isn't running on `localhost:8000`.
+
+## API reference
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/upload-resumes` | Upload one or more resumes; parses, embeds, and stores them |
+| `POST` | `/screen` | Given a job description, returns ranked, explained candidate matches |
+| `GET` | `/resumes` | List every resume currently stored (debugging) |
+| `POST` | `/reset` | Clear all stored resumes |
+| `GET` | `/health` | Health check |
+
+## Design decisions worth knowing
+
+- **Grounding by design** — the LLM's system prompt explicitly restricts it to facts present in the resume text, and instructs it to flag missing information rather than guess. This mirrors a hallucination problem I hit and fixed in my other project, applied here from day one instead of patched in afterward.
+- **Cosine similarity, explicitly configured** — ChromaDB defaults to squared L2 (Euclidean) distance, which is incompatible with the normalized embeddings this project uses and produces meaningless (even negative) similarity scores. The collection is explicitly configured with `metadata={"hnsw:space": "cosine"}` to fix this.
+- **Low LLM temperature (0.2)** — resume screening should be consistent and factual, not creative.
+
+## Known limitations & next steps
+
+- No automated evaluation harness yet — currently verified by manual review. Next step: a test set of resumes with known-correct verdicts, checked automatically.
+- Each retrieved resume triggers its own LLM call — fine at small scale; would benefit from caching and/or batching for larger candidate pools.
+- ChromaDB's local, file-based storage is ideal for a single-instance project; a hosted vector database (Pinecone) or `pgvector` would be the natural next step for multi-server deployment.
+- Frontend is intentionally dependency-free (no build step); a React port is a natural next iteration if this grows.
+
+## License
+
+MIT
