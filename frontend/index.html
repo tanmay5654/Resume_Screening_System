@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Resume Screening — Docket</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f6f7f3;
+    --paper-raised: #ffffff;
+    --ink: #1b2430;
+    --ink-soft: #4a5568;
+    --ink-faint: #8b93a1;
+    --hairline: #d8dbd3;
+    --hairline-strong: #b9bdb3;
+
+    --strong: #1f6f54;
+    --good: #3a5a78;
+    --weak: #c98a2c;
+    --nomatch: #b23a2e;
+
+    --strong-bg: #e8f2ee;
+    --good-bg: #eaf0f5;
+    --weak-bg: #faf1e2;
+    --nomatch-bg: #f7e9e7;
+
+    --radius: 3px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(0,0,0,0.012) 0%, transparent 60%),
+      radial-gradient(circle at 80% 70%, rgba(0,0,0,0.012) 0%, transparent 60%);
+    z-index: 0;
+  }
+
+  .shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 40px 28px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 18px;
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .brand-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 30px;
+    letter-spacing: -0.01em;
+    margin: 0;
+    color: var(--ink);
+  }
+  .header-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    text-align: right;
+  }
+  .header-meta .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--strong);
+    margin-right: 6px;
+    position: relative;
+    top: -1px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    position: sticky;
+    top: 24px;
+    background: var(--paper-raised);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+  }
+  .panel-section {
+    padding: 22px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .panel-section:last-child { border-bottom: none; }
+
+  .step-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .step-number {
+    width: 18px; height: 18px;
+    border: 1px solid var(--ink);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--ink);
+    flex-shrink: 0;
+  }
+
+  .file-drop {
+    border: 1.5px dashed var(--hairline-strong);
+    border-radius: var(--radius);
+    padding: 18px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    position: relative;
+    display: block;
+  }
+  .file-drop:hover { border-color: var(--ink-soft); background: #fafaf8; }
+  .file-drop input[type="file"] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer;
+  }
+  .file-drop-label {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+  .file-drop-label strong { color: var(--ink); }
+  #fileNames {
+    margin-top: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    word-break: break-word;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 150px;
+    background: #fbfbf9;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    color: var(--ink);
+    padding: 12px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    resize: vertical;
+  }
+  textarea:focus, .file-drop:focus-within {
+    outline: none;
+    border-color: var(--ink);
+  }
+  textarea::placeholder { color: var(--ink-faint); }
+
+  button {
+    width: 100%;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: var(--radius);
+    padding: 11px 16px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: background 0.15s ease;
+  }
+  button:hover { background: #323d4d; }
+  button:disabled { background: var(--hairline-strong); cursor: not-allowed; }
+
+  .status-line {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 16px;
+  }
+  .status-line.error { color: var(--nomatch); }
+  .status-line.success { color: var(--strong); }
+
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--hairline-strong);
+  }
+  .results-header h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .results-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+  }
+
+  .empty-state {
+    border: 1px dashed var(--hairline-strong);
+    border-radius: var(--radius);
+    padding: 60px 30px;
+    text-align: center;
+    color: var(--ink-faint);
+  }
+  .empty-state svg { margin-bottom: 14px; opacity: 0.5; }
+  .empty-state p { font-size: 13px; max-width: 320px; margin: 0 auto; }
+
+  .case-file {
+    background: var(--paper-raised);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .case-file-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+  .case-file-name {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--ink);
+    word-break: break-word;
+  }
+  .case-file-index {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    letter-spacing: 0.05em;
+  }
+
+  .stamp {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 2px;
+    border: 2px solid;
+    transform: rotate(-3deg);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .stamp.strong  { color: var(--strong);  border-color: var(--strong);  background: var(--strong-bg); }
+  .stamp.good    { color: var(--good);    border-color: var(--good);    background: var(--good-bg); }
+  .stamp.weak    { color: var(--weak);    border-color: var(--weak);    background: var(--weak-bg); }
+  .stamp.nomatch { color: var(--nomatch); border-color: var(--nomatch); background: var(--nomatch-bg); transform: rotate(2deg); }
+
+  .meter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .meter-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+  .meter-track {
+    flex: 1;
+    height: 5px;
+    background: var(--hairline);
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+  }
+  .meter-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--ink);
+  }
+  .meter-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--ink);
+    white-space: nowrap;
+    min-width: 42px;
+    text-align: right;
+  }
+
+  .reasoning {
+    font-size: 13.5px;
+    color: var(--ink);
+    line-height: 1.55;
+    margin-bottom: 12px;
+  }
+
+  .missing-block {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--hairline-strong);
+    padding-left: 10px;
+  }
+  .missing-block b {
+    color: var(--ink);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 11px; height: 11px;
+    border: 1.5px solid var(--hairline-strong);
+    border-top-color: var(--ink);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spinner { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header>
+    <div>
+      <div class="brand-eyebrow">Applied AI · Retrieval-Grounded Screening</div>
+      <h1>Resume Screening Docket</h1>
+    </div>
+    <div class="header-meta">
+      <div><span class="dot"></span>backend: <span id="backendStatus">checking…</span></div>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <div class="panel">
+      <div class="panel-section">
+        <div class="step-label"><span class="step-number">1</span> Submit resumes</div>
+        <label class="file-drop" for="resumeFiles" tabindex="0">
+          <input type="file" id="resumeFiles" multiple accept=".pdf,.docx,.txt" />
+          <div class="file-drop-label"><strong>Choose files</strong> or drop them here<br/>PDF · DOCX · TXT</div>
+        </label>
+        <div id="fileNames"></div>
+        <button id="uploadBtn">Add to docket</button>
+        <div class="status-line" id="uploadStatus"></div>
+      </div>
+
+      <div class="panel-section">
+        <div class="step-label"><span class="step-number">2</span> Describe the role</div>
+        <textarea id="jobDescription" placeholder="Paste the job description — responsibilities, required skills, tools, seniority. The more specific, the better the match."></textarea>
+        <button id="screenBtn">Screen candidates</button>
+        <div class="status-line" id="screenStatus"></div>
+      </div>
+
+      <div class="panel-section">
+        <div class="step-label"><span class="step-number">↺</span> Reset</div>
+        <button id="resetBtn" style="background: transparent; color: var(--ink-soft); border: 1px solid var(--hairline-strong);">Clear docket</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="results-header">
+        <h2>Candidates</h2>
+        <div class="results-count" id="resultsCount">no screening run yet</div>
+      </div>
+      <div id="results">
+        <div class="empty-state" id="emptyState">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+            <path d="M4 4h11l5 5v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/>
+            <path d="M15 4v5h5"/>
+            <path d="M8 13h8M8 16.5h5"/>
+          </svg>
+          <p>Upload resumes and paste a job description to open the first case file.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Update this to your deployed backend URL once live on Render/Vercel.
+  const API_BASE = "http://localhost:8000";
+
+  const fileInput = document.getElementById("resumeFiles");
+  const fileNamesEl = document.getElementById("fileNames");
+  const uploadStatus = document.getElementById("uploadStatus");
+  const screenStatus = document.getElementById("screenStatus");
+  const resultsEl = document.getElementById("results");
+  const emptyState = document.getElementById("emptyState");
+  const resultsCount = document.getElementById("resultsCount");
+  const backendStatus = document.getElementById("backendStatus");
+
+  (async () => {
+    try {
+      const res = await fetch(`${API_BASE}/health`);
+      backendStatus.textContent = res.ok ? "connected" : "unreachable";
+    } catch {
+      backendStatus.textContent = "unreachable";
+    }
+  })();
+
+  fileInput.addEventListener("change", () => {
+    const names = Array.from(fileInput.files).map(f => f.name);
+    fileNamesEl.textContent = names.length ? names.join(", ") : "";
+  });
+
+  document.getElementById("uploadBtn").addEventListener("click", async () => {
+    if (!fileInput.files.length) {
+      setStatus(uploadStatus, "Choose at least one file first.", "error");
+      return;
+    }
+    const formData = new FormData();
+    for (const file of fileInput.files) formData.append("files", file);
+
+    setStatus(uploadStatus, "Parsing and embedding…", "");
+    try {
+      const res = await fetch(`${API_BASE}/upload-resumes`, { method: "POST", body: formData });
+      const data = await res.json();
+      const failedNote = data.failed.length ? ` · ${data.failed.length} failed` : "";
+      setStatus(uploadStatus, `Added ${data.uploaded} resume(s) to the docket${failedNote}.`, data.uploaded ? "success" : "error");
+    } catch {
+      setStatus(uploadStatus, "Couldn't reach the backend on localhost:8000.", "error");
+    }
+  });
+
+  document.getElementById("screenBtn").addEventListener("click", async () => {
+    const jd = document.getElementById("jobDescription").value;
+    if (!jd.trim()) {
+      setStatus(screenStatus, "Paste a job description first.", "error");
+      return;
+    }
+    setStatus(screenStatus, "Retrieving and scoring…", "");
+    resultsCount.innerHTML = '<span class="spinner"></span>';
+
+    try {
+      const res = await fetch(`${API_BASE}/screen`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ job_description: jd, top_k: 10 }),
+      });
+      const data = await res.json();
+      setStatus(screenStatus, `Screening complete.`, "success");
+      renderResults(data.results);
+    } catch {
+      setStatus(screenStatus, "Couldn't reach the backend on localhost:8000.", "error");
+      resultsCount.textContent = "no screening run yet";
+    }
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", async () => {
+    try {
+      await fetch(`${API_BASE}/reset`, { method: "POST" });
+      resultsEl.innerHTML = "";
+      resultsEl.appendChild(emptyState);
+      resultsCount.textContent = "no screening run yet";
+      setStatus(uploadStatus, "Docket cleared.", "success");
+      fileNamesEl.textContent = "";
+      fileInput.value = "";
+    } catch {
+      setStatus(uploadStatus, "Couldn't reach the backend to reset.", "error");
+    }
+  });
+
+  function setStatus(el, text, kind) {
+    el.textContent = text;
+    el.className = "status-line" + (kind ? " " + kind : "");
+  }
+
+  function verdictClass(verdict) {
+    if (verdict.includes("Strong")) return "strong";
+    if (verdict.includes("Good")) return "good";
+    if (verdict.includes("Weak")) return "weak";
+    return "nomatch";
+  }
+
+  function renderResults(results) {
+    resultsEl.innerHTML = "";
+    resultsCount.textContent = `${results.length} candidate${results.length === 1 ? "" : "s"} screened`;
+
+    if (!results.length) {
+      resultsEl.appendChild(emptyState);
+      return;
+    }
+
+    results.forEach((r, i) => {
+      const score = r.similarity_score ?? 0;
+      const card = document.createElement("div");
+      card.className = "case-file";
+      card.innerHTML = `
+        <div class="case-file-header">
+          <div>
+            <div class="case-file-index">CASE No. ${String(i + 1).padStart(3, "0")}</div>
+            <div class="case-file-name">${escapeHtml(r.filename)}</div>
+          </div>
+          <div class="stamp ${verdictClass(r.verdict)}">${escapeHtml(r.verdict)}</div>
+        </div>
+        <div class="meter-row">
+          <span class="meter-label">MATCH</span>
+          <div class="meter-track"><div class="meter-fill" style="width:${Math.max(0, Math.min(100, score))}%"></div></div>
+          <span class="meter-value">${score.toFixed ? score.toFixed(1) : score}</span>
+        </div>
+        <div class="reasoning">${escapeHtml(r.reasoning)}</div>
+        <div class="missing-block"><b>Gaps</b>${escapeHtml(r.missing)}</div>
+      `;
+      resultsEl.appendChild(card);
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str ?? "";
+    return div.innerHTML;
+  }
+</script>
+</body>
+</html>
