@@ -5,7 +5,7 @@ An AI agent that screens resumes against a job description, using retrieval-augm
 Given a batch of resumes and a job description, the system retrieves the most semantically relevant resumes via vector search, then uses an LLM to generate a grounded verdict for each candidate: a match rating, a plain-language explanation, and a list of gaps — all strictly based on what's actually written in the resume, not inferred or invented.
 
 **Live demo:** https://resumescrrener.netlify.app/
-**Backend repo / this repo:** _add your GitHub URL here_
+**Backend repo / this repo:** https://github.com/tanmay5654/Resume_Screening_System
 
 ---
 
